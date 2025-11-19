@@ -9,9 +9,9 @@ const license = '"MIT License (github.com/ykhwong/ppt-ndi)"';
 
 const _url = {
 	"ndi_sdk": {
-		"win32": "https://downloads.ndi.tv/SDK/NDI_SDK/NDI%205%20SDK.exe",
-		"linux": "https://downloads.ndi.tv/SDK/NDI_SDK_Linux/Install_NDI_SDK_v5_Linux.tar.gz",
-		"darwin": "https://downloads.ndi.tv/SDK/NDI_SDK_Mac/Install_NDI_SDK_v5_macOS.pkg"
+		"win32": "https://downloads.ndi.tv/SDK/NDI_SDK/NDI%206%20SDK.exe",
+		"linux": "https://downloads.ndi.tv/SDK/NDI_SDK_Linux/Install_NDI_SDK_v6_Linux.tar.gz",
+		"darwin": "https://downloads.ndi.tv/SDK/NDI_SDK_Mac/Install_NDI_SDK_v6_macOS.pkg"
 	},
 	"innoextract": {
 		"win32": "https://constexpr.org/innoextract/files/innoextract-1.9-windows.zip"
@@ -120,15 +120,15 @@ function _init() {
 			break;
 		case "linux":
 			console.log("Downloading NDI SDK...");
-			dl1_done = fs.existsSync(path.join(_TMPDIR, 'Install_NDI_SDK_v5_Linux.tar.gz'));
+			dl1_done = fs.existsSync(path.join(_TMPDIR, 'Install_NDI_SDK_v6_Linux.tar.gz'));
 			dl2_done = true;
 			dl3_done = true;
 			if ( ! dl1_done ) {
-				dl1 = wget.download(_url.ndi_sdk.linux, 'Install_NDI_SDK_v5_Linux.tar.gz', {});
+				dl1 = wget.download(_url.ndi_sdk.linux, 'Install_NDI_SDK_v6_Linux.tar.gz', {});
 			}
 			break;
 		case "darwin":
-			// we assume NDI SDK v5 has been installed already on macOS
+			// we assume NDI SDK v6 has been installed already on macOS
 			dl1_done = true;
 			dl2_done = true;
 			dl3_done = true;
@@ -259,7 +259,7 @@ function _buildWin32() {
 		let platformToolset;
 		let searchDir;
 		let searchDirs;
-		data = data.replace(/C:\/Program Files\/NewTek\/NDI 4 SDK/g, _TMPDIR.replace(/\\/g, "/") + "/app");
+		data = data.replace(/C:\/Program Files\/NewTek\/NDI 6 SDK/g, _TMPDIR.replace(/\\/g, "/") + "/app");
 		fs.writeFileSync("./src/PPTNDI/PPTNDI.cpp", '\ufeff' + data, { encoding: 'utf8' });
 		
 		if ( typeof(PF86) === 'undefined' ) {
@@ -385,8 +385,8 @@ function _buildLinux() {
 	try {
 		fs.copySync( path.join(_WORKDIR, "backend", "src"), "src" );
 		if ( ! fs.existsSync("NDI-SDK") ) {
-			execSync('tar -xzf Install_NDI_SDK_v5_Linux.tar.gz');
-			execSync('echo y | sh Install_NDI_SDK_v5_Linux.sh 1>/dev/null 2>/dev/null');
+			execSync('tar -xzf Install_NDI_SDK_v6_Linux.tar.gz');
+			execSync('echo y | sh Install_NDI_SDK_v6_Linux.sh 1>/dev/null 2>/dev/null');
 			fs.renameSync( 'NDI SDK for Linux', 'NDI-SDK' );
 		}
 	} catch(err) {
@@ -395,7 +395,7 @@ function _buildLinux() {
 	}
 	try {
 		console.log("Building PPTNDI...");
-		cmd = 'g++ -shared -s -fPIC -o ./src/libpptndi.so ./src/PPTNDI/PPTNDI.cpp -L "./NDI-SDK/lib/x86_64-linux-gnu" -l:libndi.so.5.1.1'
+		cmd = 'g++ -shared -s -fPIC -o ./src/libpptndi.so ./src/PPTNDI/PPTNDI.cpp -L "./NDI-SDK/lib/x86_64-linux-gnu" -lndi'
 		console.log(cmd);
 		out = execSync(cmd);
 		console.log(out.toString());
@@ -501,7 +501,15 @@ function _pack() {
 			fs.copySync( path.join( _TMPDIR, "deploy", "frontend", "i18n" ), "deploy/locales" );
 
 			out = execSync("node dev/node_modules/electron-packager/bin/electron-packager.js ./deploy ppt-ndi --electron-version=" + ver + " " + opt);
-			fs.copySync( "./NDI-SDK/lib/x86_64-linux-gnu/libndi.so.5.1.1", "ppt-ndi-linux-x64/libndi.so.5" );
+			// Find and copy the NDI library (could be libndi.so.6.x.x or similar)
+			const ndiLibPath = "./NDI-SDK/lib/x86_64-linux-gnu";
+			const ndiLibFiles = fs.readdirSync(ndiLibPath).filter(f => f.startsWith("libndi.so.") && /\d+\.\d+\.\d+$/.test(f));
+			if (ndiLibFiles.length === 0) {
+				throw new Error("Could not find NDI library file in " + ndiLibPath);
+			}
+			const ndiLibFile = ndiLibFiles.sort().pop(); // Get the latest version
+			const majorVersion = ndiLibFile.match(/libndi\.so\.(\d+)/)[1];
+			fs.copySync( path.join(ndiLibPath, ndiLibFile), path.join("ppt-ndi-linux-x64", "libndi.so." + majorVersion) );
 			fs.renameSync( './ppt-ndi-linux-x64/ppt-ndi', './ppt-ndi-linux-x64/ppt-ndi-core' );
 			fs.writeFileSync( './ppt-ndi-linux-x64/ppt-ndi', data, { encoding: 'utf8' });
 			fs.chmodSync('./ppt-ndi-linux-x64/ppt-ndi', "755");

@@ -8,13 +8,13 @@ using namespace std;
 #include <windows.h>
 
 #ifdef _WIN64
-	#pragma comment(lib, "C:/Program Files/NewTek/NDI 4 SDK/Lib/x64/Processing.NDI.Lib.x64.lib")
+	#pragma comment(lib, "C:/Program Files/NewTek/NDI 6 SDK/Lib/x64/Processing.NDI.Lib.x64.lib")
 #else // _WIN64
-	#pragma comment(lib, "C:/Program Files/NewTek/NDI 4 SDK/Lib/x86/Processing.NDI.Lib.x86.lib")
+	#pragma comment(lib, "C:/Program Files/NewTek/NDI 6 SDK/Lib/x86/Processing.NDI.Lib.x86.lib")
 #endif // _WIN64
 
-#include "C:/Program Files/NewTek/NDI 4 SDK/Examples/C++/NDIlib_Send_PNG/picopng.hpp"
-#include <C:/Program Files/NewTek/NDI 4 SDK/Include/Processing.NDI.Lib.h>
+#include "C:/Program Files/NewTek/NDI 6 SDK/Examples/C++/NDIlib_Send_PNG/picopng.hpp"
+#include <C:/Program Files/NewTek/NDI 6 SDK/Include/Processing.NDI.Lib.h>
 #elif __APPLE__
 #include <stdio.h>
 #include <stdlib.h>
