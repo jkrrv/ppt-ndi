@@ -1,0 +1,105 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm install --save
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ppt-ndi-windows-x64
+        path: tmp/ppt-ndi-win32-x64/
+        if-no-files-found: error
+        retention-days: 30
+
+  build-linux:
+    name: Build on Linux
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential g++
+    
+    - name: Install dependencies
+      run: npm install --save
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ppt-ndi-linux-x64
+        path: tmp/ppt-ndi-linux-x64/
+        if-no-files-found: error
+        retention-days: 30
+
+  build-macos:
+    name: Build on macOS
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install NDI SDK
+      run: |
+        # Download and install NDI SDK for macOS
+        curl -L -o ndi_sdk.pkg "https://downloads.ndi.tv/SDK/NDI_SDK_Mac/Install_NDI_SDK_v6_macOS.pkg"
+        sudo installer -pkg ndi_sdk.pkg -target /
+        rm ndi_sdk.pkg
+    
+    - name: Install dependencies
+      run: npm install --save
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ppt-ndi-darwin-x64
+        path: tmp/ppt-ndi-darwin-x64/
+        if-no-files-found: error
+        retention-days: 30
